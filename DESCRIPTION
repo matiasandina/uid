@@ -1,9 +1,9 @@
 Package: uid
-Title: What the Package Does (One Line, Title Case)
+Title: This package provides an interface to read and work with data coming from [UID matrix Software](https://www.uidevices.com/home-cage-monitoring/)
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    person("Matias", "Andina", , "matiasandina@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-1996-2539"))
 Description: What the package does (one paragraph).
 License: MIT + file LICENSE
 Encoding: UTF-8
@@ -12,3 +12,14 @@ RoxygenNote: 7.3.2
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+URL: https://matiasandina.github.io/uid/
+Imports: 
+    clock (>= 0.7.0),
+    dplyr (>= 1.1.2),
+    fs (>= 1.6.2),
+    ggplot2 (>= 3.4.2),
+    janitor (>= 2.1.0),
+    lubridate (>= 1.9.0),
+    readr (>= 2.1.3),
+    tidyr (>= 1.3.0),
+    tools (>= 4.1.2)
