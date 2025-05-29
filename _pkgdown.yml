@@ -4,7 +4,6 @@ template:
   bootswatch: journal
   light-switch: true
   math-rendering: katex
-  theme-dark: darkly
 
 
 navbar:
