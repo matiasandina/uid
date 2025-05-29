@@ -7,6 +7,7 @@
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![R-CMD-check](https://github.com/matiasandina/uid/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/matiasandina/uid/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 The goal of uid is to streamline the processing of temperature data
@@ -20,18 +21,6 @@ You can install the development version of uid like so:
 
 ``` r
 devtools::install_github("matiasandina/uid")
-#> Using github PAT from envvar GITHUB_PAT
-#> Downloading GitHub repo matiasandina/uid@HEAD
-#> ── R CMD build ─────────────────────────────────────────────────────────────────
-#> * checking for file ‘/tmp/RtmpnFBEMs/remotes12029e4884825e/matiasandina-uid-86e129e/DESCRIPTION’ ... OK
-#> * preparing ‘uid’:
-#> * checking DESCRIPTION meta-information ... OK
-#> * checking for LF line-endings in source and make files and shell scripts
-#> * checking for empty or unneeded directories
-#> * creating default NAMESPACE file
-#> * building ‘uid_0.0.0.9000.tar.gz’
-#> Installing package into '/tmp/RtmppFG0Cw/temp_libpath11f5c6246810bc'
-#> (as 'lib' is unspecified)
 ```
 
 ## Directory Structure
@@ -76,6 +65,8 @@ df_downsampled <- downsample_temperature(df_clean)
 
 Planned features include:
 
-- Activity calculation from raw signal
-- Interpolation of gaps
-- Duration analysis for threshold crossing events
+- [ ] Activity calculation from raw signal
+- [ ] Interpolation of gaps
+- [ ] Detection & Duration analysis for threshold crossing events
+- [ ] Example Data & Tests
+- [ ] Docs

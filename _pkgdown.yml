@@ -1,4 +1,16 @@
 url: https://matiasandina.github.io/uid/
 template:
   bootstrap: 5
+  bootswatch: journal
+  light-switch: true
+  math-rendering: katex
+  theme-dark: darkly
 
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, tutorials, news]
+    right: [search, github, lightswitch]
+
+toc:
+  depth: 2

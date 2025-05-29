@@ -9,7 +9,8 @@ clean_raw_uid(
   n = 1,
   precision = "minute",
   outlier_threshold_celsius = 1,
-  output_dir = "temperature/data"
+  output_dir = "temperature/data",
+  plot = TRUE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ clean_raw_uid(
 \item{outlier_threshold_celsius}{Temperature difference threshold to flag outliers.}
 
 \item{output_dir}{Directory to save diagnostic plots.}
+
+\item{plot}{boolean to indicate whether to plot the process of outlier removal and downsampling}
 }
 \value{
 Cleaned, downsampled data frame.

@@ -25,9 +25,9 @@ flag_temperature_outliers <- function(df, threshold = 1) {
   df |>
     dplyr::group_by(rfid) |>
     dplyr::arrange(datetime) |>
-    dplyr::mutate(temp_diff = abs(temperature - dplyr::lag(temperature))) |>
-    dplyr::ungroup() |>
-    dplyr::mutate(outlier_global = temp_diff > threshold)
+    dplyr::mutate(temp_diff = abs(temperature - dplyr::lag(temperature)),
+                  outlier_global = temp_diff > threshold) |>
+    dplyr::ungroup()
 }
 
 
@@ -45,7 +45,7 @@ downsample_temperature <- function(df, n = 1, precision = "minute") {
     ) |>
     dplyr::group_by(session_name, rfid, common_dt, matrix_name) |>
     dplyr::summarise(
-      temperature = median(temperature, na.rm = TRUE),
+      temperature = stats::median(temperature, na.rm = TRUE),
       .groups = "drop"
     ) |>
     tidyr::complete(
@@ -55,67 +55,65 @@ downsample_temperature <- function(df, n = 1, precision = "minute") {
     )
 }
 
-
-#' Generate diagnostic plots for outliers and downsampled data
+#' Plot and save outlier diagnostic
 #'
-#' @param df_outlier_flagged Data frame with outlier flags.
-#' @param df_downsampled Downsampled temperature data.
-#' @param filepath Path to the original file (used for naming output plots).
-#' @param output_dir Where to save the plots.
+#' Creates a line plot of temperature over time, highlighting outliers in red,
+#' and writes it to `output_dir/clean_plots/<basename>_outliers.png`.
+#'
+#' @param df_flagged Data frame returned by `flag_outliers()`, must include
+#'   columns `datetime`, `temperature`, `rfid`, and `outlier`.
+#' @param output_dir Path to the root output directory for plots.
+#' @param filepath Original data file path used to derive the base filename.
+#' @return Invisibly returns the ggplot object.
 #' @export
-generate_cleaning_plots <- function(
-  df_outlier_flagged,
-  df_downsampled,
-  filepath,
-  output_dir
-) {
+plot_outliers <- function(df_flagged, output_dir, filepath) {
+  # ensure directory exists
   fs::dir_create(file.path(output_dir, "clean_plots"))
+  filename_out <- file.path(
+    output_dir,
+    "clean_plots",
+    paste0(tools::file_path_sans_ext(basename(filepath)), "_outliers.png")
+  )
 
-  # Outlier plot
-  p1 <- ggplot2::ggplot(
-    df_outlier_flagged,
-    ggplot2::aes(datetime, temperature)
-  ) +
+  p <- ggplot2::ggplot(df_flagged, ggplot2::aes(datetime, temperature)) +
     ggplot2::geom_line() +
     ggplot2::geom_point(
-      data = df_outlier_flagged |> dplyr::filter(outlier_global),
+      data = df_flagged |> dplyr::filter(outlier_global),
       ggplot2::aes(datetime, temperature),
       color = "red"
     ) +
     ggplot2::facet_wrap(~rfid)
 
-  p1_fn <- file.path(
-    output_dir,
-    "clean_plots",
-    paste0(tools::file_path_sans_ext(basename(filepath)), "_outliers.png")
-  )
-  ggplot2::ggsave(
-    filename = p1_fn,
-    plot = p1,
-    width = 12,
-    height = 8,
-    units = "in"
-  )
+  ggplot2::ggsave(filename_out, plot = p, width = 12, height = 8)
+}
 
-  # Downsample plot
-  p2 <- ggplot2::ggplot(df_downsampled, ggplot2::aes(common_dt, temperature)) +
-    ggplot2::geom_line() +
-    ggplot2::facet_wrap(~rfid)
-
-  p2_fn <- file.path(
+#' Plot and save downsampled temperature trace
+#'
+#' Generates a line plot of downsampled `temperature` over `common_dt`,
+#' faceted by `rfid`, and writes it to
+#' `output_dir/clean_plots/<basename>_downsampled.png`.
+#'
+#' @param df_down Data frame returned by `downsample()`. Must contain
+#'   `common_dt`, `temperature`, and `rfid`.
+#' @param output_dir Directory where `clean_plots/` will be created (if needed).
+#' @param filepath Original CSV path—used to derive the base filename for saving.
+#' @return Invisibly returns the ggplot object.
+#' @export
+plot_downsampled_temperature <- function(df_down, output_dir, filepath) {
+  # ensure directory exists
+  fs::dir_create(file.path(output_dir, "clean_plots"))
+  filename_out <- file.path(
     output_dir,
     "clean_plots",
     paste0(tools::file_path_sans_ext(basename(filepath)), "_downsampled.png")
   )
-  ggplot2::ggsave(
-    filename = p2_fn,
-    plot = p2,
-    width = 12,
-    height = 8,
-    units = "in"
-  )
-}
 
+  p <- ggplot2::ggplot(df_down, ggplot2::aes(common_dt, temperature)) +
+    ggplot2::geom_line() +
+    ggplot2::facet_wrap(~rfid)
+
+  ggplot2::ggsave(filename_out, plot = p, width = 12, height = 8)
+}
 
 #' Wrapper to clean UID temperature CSV: read, flag outliers, downsample, and plot
 #'
@@ -124,6 +122,7 @@ generate_cleaning_plots <- function(
 #' @param precision Time unit for downsampling (default = "minute").
 #' @param outlier_threshold_celsius Temperature difference threshold to flag outliers.
 #' @param output_dir Directory to save diagnostic plots.
+#' @param plot boolean to indicate whether to plot the process of outlier removal and downsampling
 #' @return Cleaned, downsampled data frame.
 #' @export
 clean_raw_uid <- function(
@@ -131,25 +130,44 @@ clean_raw_uid <- function(
   n = 1,
   precision = "minute",
   outlier_threshold_celsius = 1,
-  output_dir = "temperature/data"
+  output_dir = "temperature/data",
+  plot = TRUE
 ) {
-  df_clean <- read_raw_uid_csv(filepath)
-  df_flagged <- flag_temperature_outliers(
-    df_clean,
+
+  df_flagged <- read_raw_uid_csv(filepath) |>
+    flag_temperature_outliers(
     threshold = outlier_threshold_celsius
   )
   df_filtered <- df_flagged |>
     dplyr::filter(!outlier_global) |>
     dplyr::select(-temp_diff, -outlier_global)
-  df_downsampled <- downsample_temperature(
+
+  df_downsampled_temperature <- downsample_temperature(
     df_filtered,
     n = n,
     precision = precision
   )
 
-  generate_cleaning_plots(df_flagged, df_downsampled, filepath, output_dir)
+  df_downsampled_activity <- calculate_activity(df_filtered) |>
+    downsample_activity()
 
-  return(df_downsampled)
+  if (isTRUE(plot)){
+    plot_outliers(
+      df_flag,
+      output_dir,
+      filepath
+    )
+    plot_downsampled_temperature(
+      df_downsampled_temperature,
+      output_dir,
+      filepath
+    )
+    #TODO: plot downsampled activity
+    # no point in keeping the jittery original one
+  }
+
+  return(list(temperature = df_downsampled_temperature,
+              activity = df_downsampled_activity))
 }
 
 #' Extract Base Name from UID CSV Filename

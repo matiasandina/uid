@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![R-CMD-check](https://github.com/matiasandina/uid/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/matiasandina/uid/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 The goal of uid is to streamline the processing of temperature data exported from UID devices. It provides functions for cleaning, outlier detection, downsampling, and diagnostic plotting, assuming a structured directory layout for raw and processed data.
@@ -25,7 +26,7 @@ The goal of uid is to streamline the processing of temperature data exported fro
 
 You can install the development version of uid like so:
 
-```{r}
+```{r, eval=FALSE}
 devtools::install_github("matiasandina/uid")
 ```
 
@@ -74,7 +75,8 @@ df_downsampled <- downsample_temperature(df_clean)
 
 Planned features include:
 
-* Activity calculation from raw signal
-* Interpolation of gaps
-* Duration analysis for threshold crossing events
-
+- [ ] Activity calculation from raw signal
+- [ ] Interpolation of gaps
+- [ ] Detection & Duration analysis for threshold crossing events
+- [ ] Example Data & Tests
+- [ ] Docs
