@@ -45,7 +45,10 @@ read_excel_datasheets <- function(filename, tibble = FALSE) {
 flatten_with_session_names <- function(nested_list) {
   # Adding session names to each dataframe
   # TODO: defensive here, check for named list input
-  named_list <- purrr::imap(nested_list, ~ map(.x, mutate, session_name = .y))
+  named_list <- purrr::imap(
+    nested_list,
+    ~ purrr::map(.x, dplyr::mutate, session_name = .y)
+  )
   # Flattening the list of lists to a single list of data frames
   flat_list <- purrr::list_flatten(named_list)
   # Binding all data frames into one

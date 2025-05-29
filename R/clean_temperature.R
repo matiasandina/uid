@@ -25,8 +25,10 @@ flag_temperature_outliers <- function(df, threshold = 1) {
   df |>
     dplyr::group_by(rfid) |>
     dplyr::arrange(datetime) |>
-    dplyr::mutate(temp_diff = abs(temperature - dplyr::lag(temperature)),
-                  outlier_global = temp_diff > threshold) |>
+    dplyr::mutate(
+      temp_diff = abs(temperature - dplyr::lag(temperature)),
+      outlier_global = temp_diff > threshold
+    ) |>
     dplyr::ungroup()
 }
 
@@ -133,11 +135,10 @@ clean_raw_uid <- function(
   output_dir = "temperature/data",
   plot = TRUE
 ) {
-
   df_flagged <- read_raw_uid_csv(filepath) |>
     flag_temperature_outliers(
-    threshold = outlier_threshold_celsius
-  )
+      threshold = outlier_threshold_celsius
+    )
   df_filtered <- df_flagged |>
     dplyr::filter(!outlier_global) |>
     dplyr::select(-temp_diff, -outlier_global)
@@ -151,9 +152,9 @@ clean_raw_uid <- function(
   df_downsampled_activity <- calculate_activity(df_filtered) |>
     downsample_activity()
 
-  if (isTRUE(plot)){
+  if (isTRUE(plot)) {
     plot_outliers(
-      df_flag,
+      df_flagged,
       output_dir,
       filepath
     )
@@ -166,8 +167,10 @@ clean_raw_uid <- function(
     # no point in keeping the jittery original one
   }
 
-  return(list(temperature = df_downsampled_temperature,
-              activity = df_downsampled_activity))
+  return(list(
+    temperature = df_downsampled_temperature,
+    activity = df_downsampled_activity
+  ))
 }
 
 #' Extract Base Name from UID CSV Filename
@@ -218,7 +221,6 @@ check_overwrite_permissions <- function(output_dir, group_names) {
     return(setdiff(group_names, fs::path_ext_remove(fs::path_file(existing))))
   } else {
     cli::cli_alert_danger("Aborting by user request.")
-    base::quit(save = "no")
   }
 }
 
