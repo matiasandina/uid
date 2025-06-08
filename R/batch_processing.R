@@ -45,8 +45,20 @@ process_all_uid_files <- function(
         outlier_threshold_celsius = outlier_threshold,
         output_dir = output_dir
       )
+      # TODO: clean_raw_uid returns a list of temperature and activity
+      # fix this to pluck first temperatures and activity separately?
+      #out <- dplyr::bind_rows(clean_list)
 
-      out <- dplyr::bind_rows(clean_list)
+      out <- clean_list |>
+        # change from list(list(activity=..., temperature=...), ...)
+        # to list(activity = list(), temperature = list())
+        purrr::transpose() |>
+        purrr::map(dplyr::bind_rows) |>
+        purrr::list_rbind(names_to = "variable") |>
+        # this list_rbind will give us two columns
+        # we want to output one column `value`
+        dplyr::mutate(value = dplyr::coalesce(temperature, activity_index)) |>
+        dplyr::select(-temperature, -activity_index)
 
       output_filename <- fs::path(output_dir, paste0(group_name, ".csv"))
       readr::write_csv(out, output_filename)
@@ -57,4 +69,13 @@ process_all_uid_files <- function(
   )
 
   invisible(output_paths)
+}
+
+#' Helper to pluck the temperature and activity datasets separately
+#' we can consider including this instead of the bind_rows(.id = "variable")
+#' the con of this is handling multiple files
+#' @keywords internal
+pluck_bind_temp_activity <- function(clean_list, nm) {
+  purrr::pluck(clean_list, nm) |>
+    dplyr::bind_rows()
 }
