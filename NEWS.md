@@ -1,4 +1,4 @@
-# uid (development version)
+# uid 0.1.0
 
 * Initial Github submission.
 * Adding basic function to read, write, process
