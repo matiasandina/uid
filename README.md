@@ -65,8 +65,6 @@ df_downsampled <- downsample_temperature(df_clean)
 
 Planned features include:
 
-- [ ] Activity calculation from raw signal
-- [ ] Interpolation of gaps
-- [ ] Detection & Duration analysis for threshold crossing events
-- [ ] Example Data & Tests
-- [ ] Docs
+~~Activity calculation from raw signal~~ ~~Interpolation of gaps~~
+~~Detection & Duration analysis for threshold crossing events~~ - \[ \]
+Example Data & Tests - \[ \] Docs - \[ \] Package Logo :)
