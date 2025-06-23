@@ -84,7 +84,7 @@ quantify_temp_bouts <- function(
       dplyr::group_by(rfid, .add = TRUE) |>
       dplyr::mutate(
         cond_filled = fill_bouts_greedy(cond_bool, max_gap = max_gap),
-        run_id = if_else(
+        run_id = dplyr::if_else(
           cond_filled,
           vctrs::vec_identify_runs(cond_filled),
           NA_integer_
