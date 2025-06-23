@@ -7,11 +7,32 @@
 #' @return A cleaned data frame with a `datetime` column.
 #' @export
 read_raw_uid_csv <- function(filepath, dt_format = "%Y/%m/%d %H:%M:%S") {
-  readr::read_csv(filepath) |>
-    janitor::clean_names() |>
-    dplyr::mutate(
-      datetime = lubridate::as_datetime(date, format = dt_format)
+  df <- readr::read_csv(filepath) |>
+    janitor::clean_names()
+
+  required_cols <- c(
+    "date", "rfid", "temperature",
+    "session_name", "matrix_name", "zone"
+  )
+
+  missing <- setdiff(required_cols, names(df))
+  if (length(missing) > 0) {
+    stop(
+      "Missing required column(s): ",
+      paste(missing, collapse = ", ")
     )
+  }
+
+  df <- dplyr::mutate(
+    df,
+    datetime = lubridate::as_datetime(date, format = dt_format)
+  )
+
+  if (any(is.na(df$datetime))) {
+    stop("Failed to parse datetime with provided format")
+  }
+
+  return(df)
 }
 
 
