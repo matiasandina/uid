@@ -120,7 +120,8 @@ plot_downsampled_temperature <- function(df_down, output_dir, filepath) {
 #' Wrapper to clean UID temperature CSV: read, flag outliers, downsample, and plot
 #'
 #' @param filepath Path to a raw UID CSV.
-#' @param n Downsampling interval size (default = 1).
+#' @param n Downsampling interval size (default = 1) applied to both temperature
+#'   and activity data.
 #' @param precision Time unit for downsampling (default = "minute").
 #' @param outlier_threshold_celsius Temperature difference threshold to flag outliers.
 #' @param output_dir Directory to save diagnostic plots.
@@ -150,7 +151,7 @@ clean_raw_uid <- function(
   )
 
   df_downsampled_activity <- calculate_activity(df_filtered) |>
-    downsample_activity()
+    downsample_activity(n = n, precision = precision)
 
   if (isTRUE(plot)) {
     plot_outliers(
