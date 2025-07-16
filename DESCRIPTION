@@ -1,6 +1,6 @@
 Package: uid
 Title: Interface with data coming from [UID matrix Software](https://www.uidevices.com/home-cage-monitoring/)
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: 
     person("Matias", "Andina", , "matiasandina@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-1996-2539"))

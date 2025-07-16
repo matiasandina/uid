@@ -23,6 +23,8 @@ quantify_temp_bouts(
 
 \item{max_gap}{Numeric. Maximum number of consecutive NA values allowed within a bout.
 Note: bouts are still broken by non-NA values that fail the threshold condition.}
+
+\item{sampling_interval}{A numeric value representing the sampling interval in minutes for all groups. Defaults to automatic estimation using \code{\link[=estimate_sampling_interval]{estimate_sampling_interval()}}.}
 }
 \value{
 A data frame with one row per bout per animal, with start/end/duration
