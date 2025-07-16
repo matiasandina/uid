@@ -78,6 +78,7 @@ estimate_sampling_interval <- function(df) {
 #' @param df A data frame with at least columns: `rfid`, `common_dt`, `variable`, and `value`
 #' @param direction Either "above" or "below"
 #' @param threshold Numeric threshold to compare temperature values against
+#' @param sampling_interval A numeric value representing the sampling interval in minutes for all groups. Defaults to automatic estimation using [estimate_sampling_interval()].
 #' @param greedy Logical. If TRUE, allow bouts to continue through NAs. Default is FALSE.
 #' @param max_gap Numeric. Maximum number of consecutive NA values allowed within a bout.
 #'   Note: bouts are still broken by non-NA values that fail the threshold condition.
@@ -104,6 +105,18 @@ quantify_temp_bouts <- function(
   grouping_keys <- df |>
     dplyr::select(dplyr::all_of(original_groups), rfid) |>
     dplyr::distinct()
+
+  # Estimate sampling frequency if needed
+  sampling_interval <- switch(
+    TRUE,
+    identical(sampling_interval, estimate_sampling_interval) ~
+      estimate_sampling_interval(df),
+    is.numeric(sampling_interval) && length(sampling_interval) == 1 ~
+      as.numeric(sampling_interval),
+    cli::cli_abort(
+      "`sampling_interval` must be a numeric value in minutes or `estimate_sampling_interval()`"
+    )
+  )
 
   df <- df |>
     dplyr::group_by(rfid, .add = T) |>
@@ -143,14 +156,16 @@ quantify_temp_bouts <- function(
     dplyr::summarise(
       start = min(common_dt),
       end = max(common_dt),
-      duration_minutes = as.numeric(difftime(end, start, units = "mins")) + 1,
+      duration_minutes = as.numeric(difftime(end, start, units = "mins")) +
+        sampling_interval,
     )
 
   bouts_summary <- grouping_keys |>
     dplyr::full_join(bouts_summary, by = c(original_groups, "rfid")) |>
     tidyr::complete(
       fill = list(duration_minutes = 0)
-    )
+    ) |>
+    dplyr::select(-run_id)
 
   return(bouts_summary)
 }
