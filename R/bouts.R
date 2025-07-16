@@ -34,6 +34,45 @@ validate_bout_input <- function(df) {
   }
 }
 
+#' Estimate Sampling Interval from Grouped Data
+#'
+#' Determines the time difference in minutes between consecutive `common_dt`
+#' observations for each group in `df`. All groups must have a single unique
+#' interval and share the same value.
+#'
+#' @param df A grouped data frame containing a `common_dt` column.
+#'
+#' @return Numeric sampling interval in minutes.
+estimate_sampling_interval <- function(df) {
+  group_vars <- dplyr::group_vars(df)
+  if (length(group_vars) == 0) {
+    cli::cli_abort(
+      "`df` must be grouped before estimating the sampling interval."
+    )
+  }
+
+  intervals <- df |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(group_vars))) |>
+    dplyr::arrange(common_dt, .by_group = TRUE) |>
+    dplyr::summarise(
+      interval = list(unique(as.numeric(diff(common_dt), units = "mins"))),
+      .groups = "drop"
+    )
+
+  bad_groups <- vapply(intervals$interval, length, integer(1)) != 1
+  if (any(bad_groups)) {
+    cli::cli_abort("Multiple sampling intervals detected in some groups.")
+  }
+
+  interval_vals <- vapply(intervals$interval, `[`, numeric(1), 1)
+  if (length(unique(interval_vals)) != 1) {
+    cli::cli_abort("Groups have different sampling intervals.")
+  }
+
+  unique(interval_vals)
+}
+
+
 #' Quantify bouts of temperature above or below a threshold
 #'
 #' @param df A data frame with at least columns: `rfid`, `common_dt`, `variable`, and `value`
