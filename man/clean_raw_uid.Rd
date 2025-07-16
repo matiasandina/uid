@@ -16,7 +16,8 @@ clean_raw_uid(
 \arguments{
 \item{filepath}{Path to a raw UID CSV.}
 
-\item{n}{Downsampling interval size (default = 1).}
+\item{n}{Downsampling interval size (default = 1) applied to both temperature
+and activity data.}
 
 \item{precision}{Time unit for downsampling (default = "minute").}
 
