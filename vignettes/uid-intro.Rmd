@@ -1,0 +1,85 @@
+---
+title: "Step-by-Step UID Workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Step-by-Step UID Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This vignette walks through processing a single UID CSV file using the functions in **uid**. A small example dataset is bundled with the package so the code chunks below can be evaluated.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(uid)
+library(dplyr)
+```
+
+## 1. Reading raw data
+
+```{r read}
+file_path <- system.file("extdata", "uid_sample.csv", package = "uid")
+raw <- read_raw_uid_csv(file_path)
+head(raw)
+```
+
+## 2. Cleaning and outlier removal
+
+```{r clean}
+flagged <- flag_temperature_outliers(raw, threshold = 1)
+clean <- dplyr::filter(flagged, !outlier_global)
+```
+
+You can visualize the flagged outliers with `plot_outliers()` (plot not shown):
+
+```{r flagged-plot, eval=FALSE}
+plot_outliers(flagged, output_dir = tempdir(), filepath = file_path)
+```
+
+```
+# example for flagged
+ggplot2::ggplot(flagged, ggplot2::aes(datetime, temperature)) +
+  ggplot2::geom_line() +
+  ggplot2::geom_point(
+    data = flagged |> dplyr::filter(outlier_global),
+    ggplot2::aes(datetime, temperature),
+    color = "red"
+  ) +
+  ggplot2::facet_wrap(~rfid)
+```
+
+## 3. Activity calculation
+
+```{r activity}
+with_activity <- calculate_activity(clean)
+```
+
+## 4. Downsampling and interpolation
+
+```{r downsample}
+down_temp <- downsample_temperature(with_activity)
+down_act  <- downsample_activity(with_activity)
+merged <- dplyr::left_join(
+  down_temp, down_act,
+  by = c("session_name", "rfid", "common_dt", "matrix_name")
+)
+
+interp <- merged |>
+  dplyr::group_by(rfid, session_name, matrix_name) |>
+  interpolate_gaps(
+    max_gap = 10,
+    target_cols = c("temperature", "activity_index")
+  )
+```
+
+## 5. Visualizing results
+
+```{r downsampled-plot, eval=FALSE}
+plot_downsampled_temperature(
+  down_temp,
+  output_dir = tempdir(),
+  filepath = file_path
+)
+```
+
+The `interp` data frame now holds cleaned, downsampled values with short gaps interpolated. For processing multiple files automatically, see the vignette on `process_all_uid_files()`.

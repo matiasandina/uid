@@ -13,3 +13,8 @@ navbar:
 
 toc:
   depth: 2
+
+articles:
+  - title: "Get started"
+    contents:
+      - uid-intro
