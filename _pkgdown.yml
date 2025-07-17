@@ -5,6 +5,10 @@ template:
   light-switch: true
   math-rendering: katex
 
+articles:
+  - title: "Get started"
+    contents:
+      - Step-by-Step-UID-Workflow
 
 navbar:
   structure:

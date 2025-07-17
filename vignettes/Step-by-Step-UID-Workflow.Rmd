@@ -1,0 +1,126 @@
+---
+title: "Step-by-Step UID Workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Step-by-Step UID Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette walks through processing a single UID CSV file using the functions in `uid`. A small example dataset is bundled with the package, and serves to illustrate how the package works.
+
+```{r setup}
+library(uid)
+```
+
+## 1. Reading raw data
+
+```{r read, eval = FALSE}
+file_path <- "path_to_your_data.csv"
+# this will read and clean names, switch the datetime to proper datetime
+raw <- read_raw_uid_csv(file_path)
+```
+
+Since the `uid` package provides sample data that emulates the result of `read_raw_uid_csv`, and we can use it for the tutorial.
+
+```{r sampledata}
+head(uid_sample_data)
+```
+
+
+
+## 2. Cleaning and outlier removal
+
+```{r clean}
+# jumps of more than one degree will be counted as outliers
+flagged <- flag_temperature_outliers(uid_sample_data, threshold = 1)
+# remove temperature outliers
+clean <- dplyr::filter(flagged, !outlier_global)
+```
+
+You can visualize the flagged outliers with `plot_outliers()`. This will save the plots to specific locations. 
+
+```{r flagged-plot, eval=FALSE}
+plot_outliers(flagged, output_dir = tempdir(), filepath = file_path)
+```
+
+```{r plot}
+# example for flagged
+ggplot2::ggplot(flagged, ggplot2::aes(datetime, temperature, group=rfid)) +
+  ggplot2::geom_line() +
+  ggplot2::geom_point(
+    data = flagged |> dplyr::filter(outlier_global),
+    ggplot2::aes(datetime, temperature),
+    color = "red"
+  ) +
+  ggplot2::facet_wrap(~rfid) +
+  ggplot2::scale_x_datetime(date_breaks = "6 hours", date_labels = "%H:%M")
+```
+
+## 3. Activity calculation
+
+```{r activity}
+with_activity <- calculate_activity(clean)
+```
+
+## 4. Downsampling and interpolation
+
+Sample data is provided with a sample interval of 20 seconds. We can aggregate the data with precision of 1 minute.
+
+```{r downsample}
+down_temp <- downsample_temperature(with_activity, n = 1, precision = "minute")
+down_act  <- downsample_activity(with_activity, n = 1, precision = "minute")
+merged <- dplyr::left_join(
+  down_temp, down_act,
+  by = c("session_name", "rfid", "common_dt", "matrix_name")
+)
+```
+
+Data acquisition might generate `NA`s that survive downsampling. We included some of such gaps in the sample data.
+
+```{r}
+dplyr::filter(merged, is.na(temperature))
+```
+
+
+It might be desired to interpolate such `NA`s using `interpolate_gaps()`. We can set `add_flag = TRUE` to check what values were interpolated.
+
+```{r}
+interp <- merged |>
+  dplyr::group_by(rfid, session_name, matrix_name) |>
+  interpolate_gaps(
+    max_gap = 10,
+    target_cols = c("temperature", "activity_index"),
+    add_flag = TRUE
+  )
+
+```
+
+
+```{r}
+dplyr::filter(interp, .interpolated) |> 
+  dplyr::select(rfid, common_dt, temperature, .interpolated)
+```
+
+By increasing the `max_gap` parameter, we will be interpolating larger gaps.
+
+We can visualize the results of the interpolation by slicing a portion of the dataset to make the linear interpolation more evident. 
+
+```{r}
+ggplot2::ggplot(interp |> dplyr::slice(200:300, .by = rfid), ggplot2::aes(common_dt, temperature, group=rfid, color = .interpolated)) +
+  ggplot2::geom_line() +
+  ggplot2::facet_wrap(~rfid) +
+  ggplot2::scale_x_datetime(date_breaks = "30 min", date_labels = "%H:%M")+
+  ggplot2::scale_color_manual(values = c("TRUE" = "red", "FALSE" = "gray20"))
+```
+
+
+
+The `interp` data frame now holds cleaned, downsampled values with short gaps interpolated. For processing multiple files automatically, see the vignette on `process_all_uid_files()` or (`help("process_all_uid_files")`).
