@@ -3,7 +3,7 @@ pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   Step-by-Step-UID-Workflow: Step-by-Step-UID-Workflow.html
-last_built: 2025-07-17T15:41Z
+last_built: 2025-07-17T15:57Z
 urls:
   reference: https://matiasandina.github.io/uid/reference
   article: https://matiasandina.github.io/uid/articles

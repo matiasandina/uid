@@ -57,23 +57,23 @@ such as dropped and spurious values. Zone entries are randomly generated.</p>
 
     <div class="section level2">
     <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
-    <p>A data frame with ~10,000 rows and 5 columns:</p><dl><dt>Date</dt>
-<dd><p>Timestamp in character format (YYYY/MM/DD HH:MM:SS)</p></dd>
+    <p>A data frame with N rows and 6 columns:</p><dl><dt>datetime</dt>
+<dd><p>Timestamp in POSIXct format</p></dd>
 
-<dt>RFID</dt>
-<dd><p>Unique identifier for each animal (e.g., A1B2C3D4)</p></dd>
+<dt>rfid</dt>
+<dd><p>Unique identifier for each subject</p></dd>
 
-<dt>Zone</dt>
-<dd><p>Integer between 1 and 8 indicating spatial zone</p></dd>
+<dt>zone</dt>
+<dd><p>Integer between 1 and 8</p></dd>
 
-<dt>Session Name</dt>
-<dd><p>Character label for the session (constant)</p></dd>
+<dt>session_name</dt>
+<dd><p>Session identifier (character)</p></dd>
 
-<dt>Temperature</dt>
-<dd><p>Body temperature in °C, with missing and spurious values</p></dd>
+<dt>temperature</dt>
+<dd><p>Body temperature with artifacts</p></dd>
 
-<dt>Matrix Name</dt>
-<dd><p>String identifier (e.g., MM1, MM2, ...) for each animal</p></dd>
+<dt>matrix_name</dt>
+<dd><p>Group label</p></dd>
 
 
 </dl></div>
