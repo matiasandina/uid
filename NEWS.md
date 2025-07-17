@@ -1,3 +1,9 @@
+# uid 0.1.2
+
+* Adding column validation on reading of raw data
+* Adding sampling data `uid_sample_data`
+* Adding vignette for basic processing (step-by-step).
+
 # uid 0.1.1
 
 * Adding helper function to estimate sampling rate (`uid:::estimate_sampling_interval()`)
@@ -5,7 +11,7 @@
 * Allowing sampling rate to be estimated from data or passed via parameter
 * removing `run_id` from bout quantification output
 * Fixing some typos
-* Upda
+* Updating `README.md`
 
 # uid 0.1.0
 
