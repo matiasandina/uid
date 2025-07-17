@@ -5,14 +5,14 @@
 \alias{uid_sample_data}
 \title{Example UID Sample Data}
 \format{
-A data frame with ~10,000 rows and 5 columns:
+A data frame with N rows and 6 columns:
 \describe{
-\item{Date}{Timestamp in character format (YYYY/MM/DD HH:MM:SS)}
-\item{RFID}{Unique identifier for each animal (e.g., A1B2C3D4)}
-\item{Zone}{Integer between 1 and 8 indicating spatial zone}
-\item{Session Name}{Character label for the session (constant)}
-\item{Temperature}{Body temperature in °C, with missing and spurious values}
-\item{Matrix Name}{String identifier (e.g., MM1, MM2, ...) for each animal}
+\item{datetime}{Timestamp in POSIXct format}
+\item{rfid}{Unique identifier for each subject}
+\item{zone}{Integer between 1 and 8}
+\item{session_name}{Session identifier (character)}
+\item{temperature}{Body temperature with artifacts}
+\item{matrix_name}{Group label}
 }
 }
 \source{
