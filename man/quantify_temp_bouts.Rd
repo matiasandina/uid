@@ -6,8 +6,9 @@
 \usage{
 quantify_temp_bouts(
   df,
-  direction = "below",
   threshold,
+  sampling_interval = estimate_sampling_interval,
+  direction = "below",
   greedy = FALSE,
   max_gap = 10
 )
@@ -15,16 +16,16 @@ quantify_temp_bouts(
 \arguments{
 \item{df}{A data frame with at least columns: \code{rfid}, \code{common_dt}, \code{variable}, and \code{value}}
 
-\item{direction}{Either "above" or "below"}
-
 \item{threshold}{Numeric threshold to compare temperature values against}
+
+\item{sampling_interval}{A numeric value representing the sampling interval in minutes for all groups. Defaults to automatic estimation using \code{\link[=estimate_sampling_interval]{estimate_sampling_interval()}}.}
+
+\item{direction}{Either "above" or "below"}
 
 \item{greedy}{Logical. If TRUE, allow bouts to continue through NAs. Default is FALSE.}
 
 \item{max_gap}{Numeric. Maximum number of consecutive NA values allowed within a bout.
 Note: bouts are still broken by non-NA values that fail the threshold condition.}
-
-\item{sampling_interval}{A numeric value representing the sampling interval in minutes for all groups. Defaults to automatic estimation using \code{\link[=estimate_sampling_interval]{estimate_sampling_interval()}}.}
 }
 \value{
 A data frame with one row per bout per animal, with start/end/duration

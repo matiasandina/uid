@@ -77,8 +77,8 @@ estimate_sampling_interval <- function(df) {
 #'
 #' @param df A data frame with at least columns: `rfid`, `common_dt`, `variable`, and `value`
 #' @param direction Either "above" or "below"
-#' @param threshold Numeric threshold to compare temperature values against
 #' @param sampling_interval A numeric value representing the sampling interval in minutes for all groups. Defaults to automatic estimation using [estimate_sampling_interval()].
+#' @param threshold Numeric threshold to compare temperature values against
 #' @param greedy Logical. If TRUE, allow bouts to continue through NAs. Default is FALSE.
 #' @param max_gap Numeric. Maximum number of consecutive NA values allowed within a bout.
 #'   Note: bouts are still broken by non-NA values that fail the threshold condition.
@@ -86,8 +86,9 @@ estimate_sampling_interval <- function(df) {
 #' @export
 quantify_temp_bouts <- function(
   df,
-  direction = "below",
   threshold,
+  sampling_interval = estimate_sampling_interval,
+  direction = "below",
   greedy = FALSE,
   max_gap = 10
 ) {
