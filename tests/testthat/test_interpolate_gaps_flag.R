@@ -40,19 +40,32 @@ test_that("interpolate_gaps() flags interpolated values", {
   df <- dplyr::bind_rows(df_A, df_B) |>
     dplyr::group_by(rfid, session_name, matrix_name)
 
-  df_interp <- interpolate_gaps(df, max_gap = 10, target_cols = "temperature", add_flag = TRUE)
+  df_interp <- interpolate_gaps(
+    df,
+    max_gap = 10,
+    target_cols = "temperature",
+    add_flag = TRUE
+  )
 
   expected_flag <- is.na(df$temperature) & !is.na(df_interp$temperature)
   expect_identical(df_interp$.interpolated, expected_flag)
 
-  short_gap_A <- df_interp |> dplyr::filter(rfid == "A001") |> dplyr::slice(21:26)
-  long_gap_A  <- df_interp |> dplyr::filter(rfid == "A001") |> dplyr::slice(61:81)
+  short_gap_A <- df_interp |>
+    dplyr::filter(rfid == "A001") |>
+    dplyr::slice(21:26)
+  long_gap_A <- df_interp |>
+    dplyr::filter(rfid == "A001") |>
+    dplyr::slice(61:81)
 
-  short_gap_B <- df_interp |> dplyr::filter(rfid == "B002") |> dplyr::slice(11:13)
-  long_gap_B  <- df_interp |> dplyr::filter(rfid == "B002") |> dplyr::slice(91:109)
+  short_gap_B <- df_interp |>
+    dplyr::filter(rfid == "B002") |>
+    dplyr::slice(11:13)
+  long_gap_B <- df_interp |>
+    dplyr::filter(rfid == "B002") |>
+    dplyr::slice(91:109)
 
-  expect_true(all(short_gap_A$.interpolated))
-  expect_true(all(!long_gap_A$.interpolated))
-  expect_true(all(short_gap_B$.interpolated))
-  expect_true(all(!long_gap_B$.interpolated))
+  testthat::expect_true(all(short_gap_A$.interpolated))
+  testthat::expect_true(all(!long_gap_A$.interpolated))
+  testthat::expect_true(all(short_gap_B$.interpolated))
+  testthat::expect_true(all(!long_gap_B$.interpolated))
 })

@@ -5,7 +5,7 @@ test_that("interpolate_gaps() interpolates only short gaps", {
   common_dt <- seq.POSIXt(
     from = as.POSIXct("2023-01-01 08:00:00"),
     by = "min",
-    length.out = 120  # 2 hours
+    length.out = 120 # 2 hours
   )
 
   # Generate smooth temperature curve with noise
@@ -33,10 +33,10 @@ test_that("interpolate_gaps() interpolates only short gaps", {
   )
 
   # Inject gaps
-  df_A$temperature[21:26] <- NA     # gap of 6
-  df_A$temperature[61:81] <- NA     # gap of 21
-  df_B$temperature[11:13] <- NA     # gap of 3
-  df_B$temperature[91:109] <- NA    # gap of 19
+  df_A$temperature[21:26] <- NA # gap of 6
+  df_A$temperature[61:81] <- NA # gap of 21
+  df_B$temperature[11:13] <- NA # gap of 3
+  df_B$temperature[91:109] <- NA # gap of 19
 
   df <- dplyr::bind_rows(df_A, df_B) |>
     dplyr::group_by(rfid, session_name, matrix_name)
@@ -49,14 +49,14 @@ test_that("interpolate_gaps() interpolates only short gaps", {
   df_interp_B <- dplyr::filter(df_interp, rfid == "B002")
 
   short_gap_A <- df_interp_A |> dplyr::slice(21:26)
-  long_gap_A  <- df_interp_A |> dplyr::slice(61:81)
+  long_gap_A <- df_interp_A |> dplyr::slice(61:81)
 
   short_gap_B <- df_interp_B |> dplyr::slice(11:13)
-  long_gap_B  <- df_interp_B |> dplyr::slice(91:109)
+  long_gap_B <- df_interp_B |> dplyr::slice(91:109)
 
-  expect_true(all(!is.na(short_gap_A$temperature)))
-  expect_true(all(is.na(long_gap_A$temperature)))
+  testthat::expect_true(all(!is.na(short_gap_A$temperature)))
+  testthat::expect_true(all(is.na(long_gap_A$temperature)))
 
-  expect_true(all(!is.na(short_gap_B$temperature)))
-  expect_true(all(is.na(long_gap_B$temperature)))
+  testthat::expect_true(all(!is.na(short_gap_B$temperature)))
+  testthat::expect_true(all(is.na(long_gap_B$temperature)))
 })
