@@ -11,8 +11,12 @@ read_raw_uid_csv <- function(filepath, dt_format = "%Y/%m/%d %H:%M:%S") {
     janitor::clean_names()
 
   required_cols <- c(
-    "date", "rfid", "temperature",
-    "session_name", "matrix_name", "zone"
+    "date",
+    "rfid",
+    "temperature",
+    "session_name",
+    "matrix_name",
+    "zone"
   )
 
   missing <- setdiff(required_cols, names(df))
@@ -258,7 +262,7 @@ find_raw_export_files <- function(raw_export_dir) {
   temperature_files <- list.files(
     raw_export_dir,
     pattern = "CSV$",
-    full.names = T
+    full.names = TRUE
   )
 
   cli::cli_alert_success("Found {length(temperature_files)} raw files:")

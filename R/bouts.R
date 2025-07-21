@@ -120,7 +120,7 @@ quantify_temp_bouts <- function(
   )
 
   df <- df |>
-    dplyr::group_by(rfid, .add = T) |>
+    dplyr::group_by(rfid, .add = TRUE) |>
     dplyr::arrange(common_dt, .by_group = TRUE) |>
     dplyr::mutate(cond_bool = cond_fun(value))
 
