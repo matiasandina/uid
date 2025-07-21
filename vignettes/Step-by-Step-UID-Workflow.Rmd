@@ -28,7 +28,7 @@ file_path <- "path_to_your_data.csv"
 raw <- read_raw_uid_csv(file_path)
 ```
 
-Since the `uid` package provides sample data that emulates the result of `read_raw_uid_csv`, and we can use it for the tutorial.
+The `uid` package provides sample data that emulates the result of `read_raw_uid_csv`, and we can use it for the tutorial.
 
 ```{r sampledata}
 head(uid_sample_data)
@@ -37,6 +37,8 @@ head(uid_sample_data)
 
 
 ## 2. Cleaning and outlier removal
+
+UID raw data export might come with outliers from wrong detections. We use a simple filter based on point-to-point difference and a threshold. This approach works well for raw data with fast sampling rate (e.g., sampling rate lesser than 1 minute) and it's implemented via `flag_temperature_outliers()`. If your data comes from a slow sampling rate (e.g., sampling rate in the tens of minutes), this approach might not be the best to remove outliers. 
 
 ```{r clean}
 # jumps of more than one degree will be counted as outliers
@@ -50,6 +52,8 @@ You can visualize the flagged outliers with `plot_outliers()`. This will save th
 ```{r flagged-plot, eval=FALSE}
 plot_outliers(flagged, output_dir = tempdir(), filepath = file_path)
 ```
+
+For the purpose of this tutorial, we will plot the results here instead of saving them to file.
 
 ```{r plot}
 # example for flagged
@@ -66,13 +70,30 @@ ggplot2::ggplot(flagged, ggplot2::aes(datetime, temperature, group=rfid)) +
 
 ## 3. Activity calculation
 
+Activity calculation is performed using the known distance between the induction coil zones as given by the `zone` column in the raw data export. You can check the zones with
+
+```{r zonecheck}
+uid:::.zone_coords
+```
+
+Euclidean distance calculations are therefore defined by the transitions from one zone to another. For example transitioning from zone 4 to zone 1 is a movement of 10.875000 inches.  
+
+```{r trandistance}
+head(uid:::.transition_distances)
+```
+
+
+> 🚧 Please make sure you are using the same platforms if you plan to use `calculate_activity()`
+
+The function `calculate_activity()` uses the `.transition_distances` as a transition dictionary for platforms with 8 zones.
+
 ```{r activity}
 with_activity <- calculate_activity(clean)
 ```
 
 ## 4. Downsampling and interpolation
 
-Sample data is provided with a sample interval of 20 seconds. We can aggregate the data with precision of 1 minute.
+The sample data is provided with a sample interval of 20 seconds. Because the timestamp that comes with real data detections will not be the same for different `rfid`, there will not be a common timestamp across `rfid`. This may or might not be a problem for different analysis, but it is also often desired to aggregate the data on longer intervals (e.g., 1 or 5 minutes). Using `downsample_temperature` or `downsample_activity()`, we can aggregate the data with precision of 1 minute. A feature of this is that the operation is performed by `rfid` (and other desired grouping variables). As a result, will have all `rfid` sampled at the same downsampled `common_time`.
 
 ```{r downsample}
 down_temp <- downsample_temperature(with_activity, n = 1, precision = "minute")
@@ -83,7 +104,7 @@ merged <- dplyr::left_join(
 )
 ```
 
-Data acquisition might generate `NA`s that survive downsampling. We included some of such gaps in the sample data.
+Data acquisition might generate `NA` values that survive downsampling. We included some of such gaps in the sample data.
 
 ```{r}
 dplyr::filter(merged, is.na(temperature))
