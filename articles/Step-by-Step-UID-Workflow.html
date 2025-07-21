@@ -81,8 +81,8 @@ with the package, and serves to illustrate how the package works.</p>
 <code class="sourceCode R"><span><span class="va">file_path</span> <span class="op">&lt;-</span> <span class="st">"path_to_your_data.csv"</span></span>
 <span><span class="co"># this will read and clean names, switch the datetime to proper datetime</span></span>
 <span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_raw_uid_csv.html">read_raw_uid_csv</a></span><span class="op">(</span><span class="va">file_path</span><span class="op">)</span></span></code></pre></div>
-<p>Since the <code>uid</code> package provides sample data that emulates
-the result of <code>read_raw_uid_csv</code>, and we can use it for the
+<p>The <code>uid</code> package provides sample data that emulates the
+result of <code>read_raw_uid_csv</code>, and we can use it for the
 tutorial.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">uid_sample_data</span><span class="op">)</span></span>
@@ -97,6 +97,13 @@ tutorial.</p>
 <div class="section level2">
 <h2 id="cleaning-and-outlier-removal">2. Cleaning and outlier removal<a class="anchor" aria-label="anchor" href="#cleaning-and-outlier-removal"></a>
 </h2>
+<p>UID raw data export might come with outliers from wrong detections.
+We use a simple filter based on point-to-point difference and a
+threshold. This approach works well for raw data with fast sampling rate
+(e.g., sampling rate lesser than 1 minute) and it’s implemented via
+<code><a href="../reference/flag_temperature_outliers.html">flag_temperature_outliers()</a></code>. If your data comes from a slow
+sampling rate (e.g., sampling rate in the tens of minutes), this
+approach might not be the best to remove outliers.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># jumps of more than one degree will be counted as outliers</span></span>
 <span><span class="va">flagged</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flag_temperature_outliers.html">flag_temperature_outliers</a></span><span class="op">(</span><span class="va">uid_sample_data</span>, threshold <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -107,6 +114,8 @@ tutorial.</p>
 locations.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_outliers.html">plot_outliers</a></span><span class="op">(</span><span class="va">flagged</span>, output_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, filepath <span class="op">=</span> <span class="va">file_path</span><span class="op">)</span></span></code></pre></div>
+<p>For the purpose of this tutorial, we will plot the results here
+instead of saving them to file.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># example for flagged</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">flagged</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">datetime</span>, <span class="va">temperature</span>, group<span class="op">=</span><span class="va">rfid</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -123,24 +132,69 @@ locations.</p>
 <div class="section level2">
 <h2 id="activity-calculation">3. Activity calculation<a class="anchor" aria-label="anchor" href="#activity-calculation"></a>
 </h2>
+<p>Activity calculation is performed using the known distance between
+the induction coil zones as given by the <code>zone</code> column in the
+raw data export. You can check the zones with</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">uid</span><span class="fu">:::</span><span class="va">.zone_coords</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 3</span></span></span>
+<span><span class="co">#&gt;    zone     x     y</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1  0     0   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2  3.62  0   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3  7.25  0   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4 10.9   0   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     5 10.9   3.16</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     6  7.25  3.16</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span>     7  3.62  3.16</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span>     8  0     3.16</span></span></code></pre></div>
+<p>Euclidean distance calculations are therefore defined by the
+transitions from one zone to another. For example transitioning from
+zone 4 to zone 1 is a movement of 10.875000 inches.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">uid</span><span class="fu">:::</span><span class="va">.transition_distances</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   from to activity_index</span></span>
+<span><span class="co">#&gt; 1    1  1       0.000000</span></span>
+<span><span class="co">#&gt; 2    2  1       3.625000</span></span>
+<span><span class="co">#&gt; 3    3  1       7.250000</span></span>
+<span><span class="co">#&gt; 4    4  1      10.875000</span></span>
+<span><span class="co">#&gt; 5    5  1      11.324806</span></span>
+<span><span class="co">#&gt; 6    6  1       7.908736</span></span></code></pre></div>
+<blockquote>
+<p>🚧 Please make sure you are using the same platforms if you plan to
+use <code><a href="../reference/calculate_activity.html">calculate_activity()</a></code></p>
+</blockquote>
+<p>The function <code><a href="../reference/calculate_activity.html">calculate_activity()</a></code> uses the
+<code>.transition_distances</code> as a transition dictionary for
+platforms with 8 zones.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">with_activity</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_activity.html">calculate_activity</a></span><span class="op">(</span><span class="va">clean</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="downsampling-and-interpolation">4. Downsampling and interpolation<a class="anchor" aria-label="anchor" href="#downsampling-and-interpolation"></a>
 </h2>
-<p>Sample data is provided with a sample interval of 20 seconds. We can
-aggregate the data with precision of 1 minute.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<p>The sample data is provided with a sample interval of 20 seconds.
+Because the timestamp that comes with real data detections will not be
+the same for different <code>rfid</code>, there will not be a common
+timestamp across <code>rfid</code>. This may or might not be a problem
+for different analysis, but it is also often desired to aggregate the
+data on longer intervals (e.g., 1 or 5 minutes). Using
+<code>downsample_temperature</code> or
+<code><a href="../reference/downsample_activity.html">downsample_activity()</a></code>, we can aggregate the data with
+precision of 1 minute. A feature of this is that the operation is
+performed by <code>rfid</code> (and other desired grouping variables).
+As a result, will have all <code>rfid</code> sampled at the same
+downsampled <code>common_time</code>.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">down_temp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/downsample_temperature.html">downsample_temperature</a></span><span class="op">(</span><span class="va">with_activity</span>, n <span class="op">=</span> <span class="fl">1</span>, precision <span class="op">=</span> <span class="st">"minute"</span><span class="op">)</span></span>
 <span><span class="va">down_act</span>  <span class="op">&lt;-</span> <span class="fu"><a href="../reference/downsample_activity.html">downsample_activity</a></span><span class="op">(</span><span class="va">with_activity</span>, n <span class="op">=</span> <span class="fl">1</span>, precision <span class="op">=</span> <span class="st">"minute"</span><span class="op">)</span></span>
 <span><span class="va">merged</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span></span>
 <span>  <span class="va">down_temp</span>, <span class="va">down_act</span>,</span>
 <span>  by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"session_name"</span>, <span class="st">"rfid"</span>, <span class="st">"common_dt"</span>, <span class="st">"matrix_name"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Data acquisition might generate <code>NA</code>s that survive
+<p>Data acquisition might generate <code>NA</code> values that survive
 downsampling. We included some of such gaps in the sample data.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">merged</span>, <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">temperature</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 37 × 6</span></span></span>
 <span><span class="co">#&gt;    session_name rfid  matrix_name common_dt           temperature activity_index</span></span>
@@ -159,7 +213,7 @@ downsampling. We included some of such gaps in the sample data.</p>
 <p>It might be desired to interpolate such <code>NA</code>s using
 <code><a href="../reference/interpolate_gaps.html">interpolate_gaps()</a></code>. We can set <code>add_flag = TRUE</code>
 to check what values were interpolated.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">interp</span> <span class="op">&lt;-</span> <span class="va">merged</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">rfid</span>, <span class="va">session_name</span>, <span class="va">matrix_name</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/interpolate_gaps.html">interpolate_gaps</a></span><span class="op">(</span></span>
@@ -167,7 +221,7 @@ to check what values were interpolated.</p>
 <span>    target_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"temperature"</span>, <span class="st">"activity_index"</span><span class="op">)</span>,</span>
 <span>    add_flag <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">interp</span>, <span class="va">.interpolated</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">rfid</span>, <span class="va">common_dt</span>, <span class="va">temperature</span>, <span class="va">.interpolated</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 37 × 4</span></span></span>
@@ -189,7 +243,7 @@ interpolating larger gaps.</p>
 <p>We can visualize the results of the interpolation by slicing a
 portion of the dataset to make the linear interpolation more
 evident.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">interp</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice</a></span><span class="op">(</span><span class="fl">200</span><span class="op">:</span><span class="fl">300</span>, .by <span class="op">=</span> <span class="va">rfid</span><span class="op">)</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">common_dt</span>, <span class="va">temperature</span>, group<span class="op">=</span><span class="va">rfid</span>, color <span class="op">=</span> <span class="va">.interpolated</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">rfid</span><span class="op">)</span> <span class="op">+</span></span>
