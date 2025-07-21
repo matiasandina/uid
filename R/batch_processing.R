@@ -18,7 +18,7 @@ process_all_uid_files <- function(
   outlier_threshold = 1
 ) {
   temperature_files <- find_raw_export_files(raw_export_dir = raw_export_dir)
-  base_names <- sapply(temperature_files, extract_base_name)
+  base_names <- vapply(temperature_files, extract_base_name)
   file_groups <- split(temperature_files, base_names)
 
   cli::cli_alert_info(
