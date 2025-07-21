@@ -17,3 +17,5 @@ navbar:
 
 toc:
   depth: 2
+
+VignetteBuilder: knitr
