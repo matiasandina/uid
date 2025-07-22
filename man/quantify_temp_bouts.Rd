@@ -18,7 +18,7 @@ quantify_temp_bouts(
 
 \item{threshold}{Numeric threshold to compare temperature values against}
 
-\item{sampling_interval}{A numeric value representing the sampling interval in minutes for all groups. Defaults to automatic estimation using \code{\link[=estimate_sampling_interval]{estimate_sampling_interval()}}.}
+\item{sampling_interval}{A numeric value representing the sampling interval in minutes for all groups. Users can provide a custom function to estimate the sampling interval from data but it must return a single numeric value. Defaults to automatic estimation using \code{\link[=estimate_sampling_interval]{estimate_sampling_interval()}}.}
 
 \item{direction}{Either "above" or "below"}
 
