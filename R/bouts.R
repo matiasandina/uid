@@ -73,11 +73,37 @@ estimate_sampling_interval <- function(df) {
 }
 
 
+#' Resolve sampling interval specification
+#'
+#' Internal utility to resolve the sampling interval for temperature data. Accepts either:
+#' - a single numeric value (assumed to be in minutes)
+#' - a function that returns a numeric value when applied to the input data
+#'
+#' Used internally by [quantify_temp_bouts()] to support flexible user input.
+#'
+#' @param df A data frame used as input to the function if `sampling_interval` is a function.
+#' @param sampling_interval A numeric value (in minutes) or a function taking `df` and returning a numeric value.
+#'
+#' @return A numeric sampling interval in minutes.
+#' @keywords internal
+resolve_sampling_interval <- function(df, sampling_interval) {
+  if (is.function(sampling_interval)) {
+    if (!identical(sampling_interval, estimate_sampling_interval)) {
+      cli::cli_alert_warning("Using custom sampling interval function.")
+    }
+    return(sampling_interval(df))
+  } else if (is.numeric(sampling_interval) && length(sampling_interval) == 1) {
+    return(as.numeric(sampling_interval))
+  } else {
+    cli::cli_abort("`sampling_interval` must be a numeric value or function.")
+  }
+}
+
 #' Quantify bouts of temperature above or below a threshold
 #'
 #' @param df A data frame with at least columns: `rfid`, `common_dt`, `variable`, and `value`
 #' @param direction Either "above" or "below"
-#' @param sampling_interval A numeric value representing the sampling interval in minutes for all groups. Defaults to automatic estimation using [estimate_sampling_interval()].
+#' @param sampling_interval A numeric value representing the sampling interval in minutes for all groups. Users can provide a custom function to estimate the sampling interval from data but it must return a single numeric value. Defaults to automatic estimation using [estimate_sampling_interval()].
 #' @param threshold Numeric threshold to compare temperature values against
 #' @param greedy Logical. If TRUE, allow bouts to continue through NAs. Default is FALSE.
 #' @param max_gap Numeric. Maximum number of consecutive NA values allowed within a bout.
@@ -107,17 +133,8 @@ quantify_temp_bouts <- function(
     dplyr::select(dplyr::all_of(original_groups), rfid) |>
     dplyr::distinct()
 
-  # Estimate sampling frequency if needed
-  sampling_interval <- switch(
-    TRUE,
-    identical(sampling_interval, estimate_sampling_interval) ~
-      estimate_sampling_interval(df),
-    is.numeric(sampling_interval) && length(sampling_interval) == 1 ~
-      as.numeric(sampling_interval),
-    cli::cli_abort(
-      "`sampling_interval` must be a numeric value in minutes or `estimate_sampling_interval()`"
-    )
-  )
+  # Resolve sampling interval for bout calculations
+  sampling_interval <- resolve_sampling_interval(df, sampling_interval)
 
   df <- df |>
     dplyr::group_by(rfid, .add = TRUE) |>
@@ -162,7 +179,7 @@ quantify_temp_bouts <- function(
     )
 
   bouts_summary <- grouping_keys |>
-    dplyr::full_join(bouts_summary, by = c(original_groups, "rfid")) |>
+    dplyr::full_join(bouts_summary, by = union(original_groups, "rfid")) |>
     tidyr::complete(
       fill = list(duration_minutes = 0)
     ) |>
