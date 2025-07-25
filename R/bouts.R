@@ -99,26 +99,67 @@ resolve_sampling_interval <- function(df, sampling_interval) {
   }
 }
 
+#' Compute bout durations
+#'
+#' @param df A grouped df with `start` and `end` timestamps per bout.
+#' @param sampling_interval Numeric value representing sampling interval in minutes.
+#' @param duration_mode Either "strict" (end - start) or "inclusive" (end - start + sampling_interval).
+#'
+#' @return A data frame with a `duration_minutes` column.
+#' @keywords internal
+compute_bout_durations <- function(df, sampling_interval, duration_mode = c("strict", "inclusive")) {
+  duration_mode <- rlang::arg_match(duration_mode)
+  df <- dplyr::mutate(
+    df,
+    duration_minutes = as.numeric(difftime(end, start, units = "mins"))
+  )
+  if (duration_mode == "inclusive") {
+    df <- dplyr::mutate(df, duration_minutes = duration_minutes + sampling_interval)
+  }
+  df
+}
+
 #' Quantify bouts of temperature above or below a threshold
 #'
-#' @param df A data frame with at least columns: `rfid`, `common_dt`, `variable`, and `value`
-#' @param direction Either "above" or "below"
-#' @param sampling_interval A numeric value representing the sampling interval in minutes for all groups. Users can provide a custom function to estimate the sampling interval from data but it must return a single numeric value. Defaults to automatic estimation using [estimate_sampling_interval()].
-#' @param threshold Numeric threshold to compare temperature values against
-#' @param greedy Logical. If TRUE, allow bouts to continue through NAs. Default is FALSE.
-#' @param max_gap Numeric. Maximum number of consecutive NA values allowed within a bout.
-#'   Note: bouts are still broken by non-NA values that fail the threshold condition.
-#' @return A data frame with one row per bout per animal, with start/end/duration
+#' Identifies contiguous periods ("bouts") where temperature is consistently above or below
+#' a user-defined threshold, allowing optional gap-tolerant detection and customizable
+#' duration calculation.
+#'
+#' @param df A grouped data frame with at least columns: `rfid`, `common_dt`, `variable`, and `value`.
+#'   Must be grouped (e.g., by `rfid`) prior to calling this function.
+#' @param threshold Numeric threshold to compare against temperature values.
+#' @param sampling_interval A numeric value representing the sampling interval in minutes,
+#'   or a function that takes `df` and returns a single numeric value (e.g., [estimate_sampling_interval()]).
+#' @param direction Either `"below"` or `"above"` to determine whether to identify values
+#'   less than or equal to (`"below"`) or greater than or equal to (`"above"`) the threshold.
+#' @param greedy Logical. If `TRUE`, allows `max_gap` NAs within a bout. If `FALSE`, bouts are broken by any NA or threshold-violating value.
+#' @param max_gap Maximum number of consecutive `NA` values allowed within a bout when `greedy = TRUE`.
+#' @param duration_mode How to compute bout duration:
+#'   - `"strict"`: calculates `end - start`
+#'   - `"inclusive"`: calculates `end - start + sampling_interval`
+#' @param drop_single_point_bouts If `TRUE`, removes bouts consisting of only one time point
+#'   (i.e., duration = 0 in `"strict"` mode). Default is `FALSE`.
+#' @param fill_undetected_groups If `TRUE` (default), ensures that all groups from the input are
+#'   represented in the output, even if no bouts were found, with `duration_minutes = 0`.
+#'
+#' @return A data frame with one row per detected bout per animal. Columns include:
+#'   - `start`, `end`: timestamps of each bout
+#'   - `duration_minutes`: duration of each bout in minutes
+#'
 #' @export
 quantify_temp_bouts <- function(
   df,
   threshold,
   sampling_interval = estimate_sampling_interval,
-  direction = "below",
+  direction = c("below", "above"),
   greedy = FALSE,
-  max_gap = 10
+  max_gap = 10,
+  duration_mode = c("strict", "inclusive"),
+  drop_single_point_bouts = FALSE,
+  fill_undetected_groups = TRUE
 ) {
   validate_bout_input(df)
+  direction <- rlang::arg_match(direction)
   # helper
   cond_fun <- if (direction == "below") {
     function(x) x <= threshold
@@ -174,16 +215,23 @@ quantify_temp_bouts <- function(
     dplyr::summarise(
       start = min(common_dt),
       end = max(common_dt),
-      duration_minutes = as.numeric(difftime(end, start, units = "mins")) +
-        sampling_interval,
-    )
+      .groups = "drop"
+    ) |>
+    compute_bout_durations(sampling_interval, duration_mode)
 
-  bouts_summary <- grouping_keys |>
+  if (drop_single_point_bouts) {
+    bouts_summary <- bouts_summary |> dplyr::filter(duration_minutes > 0)
+  }
+
+  # Return true zeros
+  if (fill_undetected_groups) {
+    bouts_summary <- grouping_keys |>
     dplyr::full_join(bouts_summary, by = union(original_groups, "rfid")) |>
     tidyr::complete(
       fill = list(duration_minutes = 0)
     ) |>
     dplyr::select(-run_id)
+  }
 
   return(bouts_summary)
 }
