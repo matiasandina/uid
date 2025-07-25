@@ -1,8 +1,8 @@
 ---
-title: "Step-by-Step UID Workflow"
+title: "Step by Step UID Workflow"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Step-by-Step UID Workflow}
+  %\VignetteIndexEntry{step_by_step_workflow}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

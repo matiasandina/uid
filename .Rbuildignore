@@ -9,3 +9,5 @@
 ^vignettes/$
 ^vignettes/articles$
 ^data-raw$
+^doc$
+^Meta$

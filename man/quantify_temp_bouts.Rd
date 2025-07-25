@@ -8,28 +8,51 @@ quantify_temp_bouts(
   df,
   threshold,
   sampling_interval = estimate_sampling_interval,
-  direction = "below",
+  direction = c("below", "above"),
   greedy = FALSE,
-  max_gap = 10
+  max_gap = 10,
+  duration_mode = c("strict", "inclusive"),
+  drop_single_point_bouts = FALSE,
+  fill_undetected_groups = TRUE
 )
 }
 \arguments{
-\item{df}{A data frame with at least columns: \code{rfid}, \code{common_dt}, \code{variable}, and \code{value}}
+\item{df}{A grouped data frame with at least columns: \code{rfid}, \code{common_dt}, \code{variable}, and \code{value}.
+Must be grouped (e.g., by \code{rfid}) prior to calling this function.}
 
-\item{threshold}{Numeric threshold to compare temperature values against}
+\item{threshold}{Numeric threshold to compare against temperature values.}
 
-\item{sampling_interval}{A numeric value representing the sampling interval in minutes for all groups. Users can provide a custom function to estimate the sampling interval from data but it must return a single numeric value. Defaults to automatic estimation using \code{\link[=estimate_sampling_interval]{estimate_sampling_interval()}}.}
+\item{sampling_interval}{A numeric value representing the sampling interval in minutes,
+or a function that takes \code{df} and returns a single numeric value (e.g., \code{\link[=estimate_sampling_interval]{estimate_sampling_interval()}}).}
 
-\item{direction}{Either "above" or "below"}
+\item{direction}{Either \code{"below"} or \code{"above"} to determine whether to identify values
+less than or equal to (\code{"below"}) or greater than or equal to (\code{"above"}) the threshold.}
 
-\item{greedy}{Logical. If TRUE, allow bouts to continue through NAs. Default is FALSE.}
+\item{greedy}{Logical. If \code{TRUE}, allows \code{max_gap} NAs within a bout. If \code{FALSE}, bouts are broken by any NA or threshold-violating value.}
 
-\item{max_gap}{Numeric. Maximum number of consecutive NA values allowed within a bout.
-Note: bouts are still broken by non-NA values that fail the threshold condition.}
+\item{max_gap}{Maximum number of consecutive \code{NA} values allowed within a bout when \code{greedy = TRUE}.}
+
+\item{duration_mode}{How to compute bout duration:
+\itemize{
+\item \code{"strict"}: calculates \code{end - start}
+\item \code{"inclusive"}: calculates \code{end - start + sampling_interval}
+}}
+
+\item{drop_single_point_bouts}{If \code{TRUE}, removes bouts consisting of only one time point
+(i.e., duration = 0 in \code{"strict"} mode). Default is \code{FALSE}.}
+
+\item{fill_undetected_groups}{If \code{TRUE} (default), ensures that all groups from the input are
+represented in the output, even if no bouts were found, with \code{duration_minutes = 0}.}
 }
 \value{
-A data frame with one row per bout per animal, with start/end/duration
+A data frame with one row per detected bout per animal. Columns include:
+\itemize{
+\item \code{start}, \code{end}: timestamps of each bout
+\item \code{duration_minutes}: duration of each bout in minutes
+}
 }
 \description{
-Quantify bouts of temperature above or below a threshold
+Identifies contiguous periods ("bouts") where temperature is consistently above or below
+a user-defined threshold, allowing optional gap-tolerant detection and customizable
+duration calculation.
 }
