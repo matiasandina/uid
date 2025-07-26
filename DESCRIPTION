@@ -28,10 +28,11 @@ Imports:
     purrr (>= 1.0.2),
     readr (>= 2.1.3),
     readxl (>= 1.4.1),
+    rlang (>= 1.1.4),
     stringr (>= 1.5.0),
     tidyr (>= 1.3.0),
     tools (>= 4.1.2),
-    vctrs,
+    vctrs
 Depends: 
     R (>= 2.10)
 LazyData: true
