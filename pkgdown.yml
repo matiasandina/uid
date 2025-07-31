@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   bout_duration_vignette: bout_duration_vignette.html
   step_by_step_workflow: step_by_step_workflow.html
-last_built: 2025-07-26T17:24Z
+last_built: 2025-07-31T12:26Z
 urls:
   reference: https://matiasandina.github.io/uid/reference
   article: https://matiasandina.github.io/uid/articles
