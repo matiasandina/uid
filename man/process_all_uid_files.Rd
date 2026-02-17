@@ -9,7 +9,11 @@ process_all_uid_files(
   output_dir = "temperature/data",
   n = 1,
   precision = "minute",
-  outlier_threshold = 1
+  outlier_threshold = 1,
+  flicker_correction = TRUE,
+  flicker_dominant_two_thr = 0.65,
+  flicker_alt_rate_thr = 0.4,
+  flicker_contiguous_thr = 0.65
 )
 }
 \arguments{
@@ -22,6 +26,14 @@ process_all_uid_files(
 \item{precision}{Time unit for binning (default = \"minute\").}
 
 \item{outlier_threshold}{Temperature delta threshold for outlier detection.}
+
+\item{flicker_correction}{Whether to apply activity flicker correction before quantification.}
+
+\item{flicker_dominant_two_thr}{Threshold for dominant two-zone occupancy fraction.}
+
+\item{flicker_alt_rate_thr}{Threshold for ABAB alternation rate within minute bins.}
+
+\item{flicker_contiguous_thr}{Threshold for contiguous-transition fraction within minute bins.}
 }
 \value{
 Invisibly returns a list of output file paths.

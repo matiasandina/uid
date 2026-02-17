@@ -8,6 +8,10 @@
 #' @param n Bin size for downsampling (default = 1).
 #' @param precision Time unit for binning (default = \"minute\").
 #' @param outlier_threshold Temperature delta threshold for outlier detection.
+#' @param flicker_correction Whether to apply activity flicker correction before quantification.
+#' @param flicker_dominant_two_thr Threshold for dominant two-zone occupancy fraction.
+#' @param flicker_alt_rate_thr Threshold for ABAB alternation rate within minute bins.
+#' @param flicker_contiguous_thr Threshold for contiguous-transition fraction within minute bins.
 #' @return Invisibly returns a list of output file paths.
 #' @export
 process_all_uid_files <- function(
@@ -15,7 +19,11 @@ process_all_uid_files <- function(
   output_dir = "temperature/data",
   n = 1,
   precision = "minute",
-  outlier_threshold = 1
+  outlier_threshold = 1,
+  flicker_correction = TRUE,
+  flicker_dominant_two_thr = 0.65,
+  flicker_alt_rate_thr = 0.40,
+  flicker_contiguous_thr = 0.65
 ) {
   temperature_files <- find_raw_export_files(raw_export_dir = raw_export_dir)
   base_names <- vapply(temperature_files, extract_base_name, FUN.VALUE = character(1))
@@ -43,7 +51,11 @@ process_all_uid_files <- function(
         n = n,
         precision = precision,
         outlier_threshold_celsius = outlier_threshold,
-        output_dir = output_dir
+        output_dir = output_dir,
+        flicker_correction = flicker_correction,
+        flicker_dominant_two_thr = flicker_dominant_two_thr,
+        flicker_alt_rate_thr = flicker_alt_rate_thr,
+        flicker_contiguous_thr = flicker_contiguous_thr
       )
       # TODO: clean_raw_uid returns a list of temperature and activity
       # fix this to pluck first temperatures and activity separately?

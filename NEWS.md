@@ -2,6 +2,7 @@
 
 * Breaking change: `downsample_activity()` now summarizes per-bin activity using total distance (`sum`) instead of `median`.
 * Added NA-safe handling in `downsample_activity()` so all-`NA` bins stay `NA` instead of becoming `0`.
+* Added default activity flicker correction in `clean_raw_uid()`/`process_all_uid_files()` using minute-level zone-pattern thresholds and propagated a `.flicker_corrected` flag into downsampled activity output.
 
 # uid 0.1.2
 

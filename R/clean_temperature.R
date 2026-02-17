@@ -151,6 +151,10 @@ plot_downsampled_temperature <- function(df_down, output_dir, filepath) {
 #' @param outlier_threshold_celsius Temperature difference threshold to flag outliers.
 #' @param output_dir Directory to save diagnostic plots.
 #' @param plot boolean to indicate whether to plot the process of outlier removal and downsampling
+#' @param flicker_correction Whether to apply activity flicker correction before quantification.
+#' @param flicker_dominant_two_thr Threshold for dominant two-zone occupancy fraction.
+#' @param flicker_alt_rate_thr Threshold for ABAB alternation rate within minute bins.
+#' @param flicker_contiguous_thr Threshold for fraction of contiguous transitions within minute bins.
 #' @return Cleaned, downsampled data frame.
 #' @export
 clean_raw_uid <- function(
@@ -159,7 +163,11 @@ clean_raw_uid <- function(
   precision = "minute",
   outlier_threshold_celsius = 1,
   output_dir = "temperature/data",
-  plot = TRUE
+  plot = TRUE,
+  flicker_correction = TRUE,
+  flicker_dominant_two_thr = 0.65,
+  flicker_alt_rate_thr = 0.40,
+  flicker_contiguous_thr = 0.65
 ) {
   df_flagged <- read_raw_uid_csv(filepath) |>
     flag_temperature_outliers(
@@ -175,7 +183,27 @@ clean_raw_uid <- function(
     precision = precision
   )
 
-  df_downsampled_activity <- calculate_activity(df_filtered) |>
+  df_activity <- if (isTRUE(flicker_correction)) {
+    .flicker_correct_zone_stream(
+      df_filtered,
+      n = n,
+      precision = precision,
+      dominant_two_thr = flicker_dominant_two_thr,
+      alt_rate_thr = flicker_alt_rate_thr,
+      contiguous_thr = flicker_contiguous_thr
+    )
+  } else {
+    df_filtered |>
+      dplyr::mutate(
+        zone_corrected = zone,
+        .flicker_corrected = FALSE
+      )
+  }
+
+  df_downsampled_activity <- calculate_activity(
+    df_activity |>
+      dplyr::mutate(zone = zone_corrected)
+  ) |>
     downsample_activity(n = n, precision = precision)
 
   if (isTRUE(plot)) {

@@ -10,7 +10,11 @@ clean_raw_uid(
   precision = "minute",
   outlier_threshold_celsius = 1,
   output_dir = "temperature/data",
-  plot = TRUE
+  plot = TRUE,
+  flicker_correction = TRUE,
+  flicker_dominant_two_thr = 0.65,
+  flicker_alt_rate_thr = 0.4,
+  flicker_contiguous_thr = 0.65
 )
 }
 \arguments{
@@ -26,6 +30,14 @@ and activity data.}
 \item{output_dir}{Directory to save diagnostic plots.}
 
 \item{plot}{boolean to indicate whether to plot the process of outlier removal and downsampling}
+
+\item{flicker_correction}{Whether to apply activity flicker correction before quantification.}
+
+\item{flicker_dominant_two_thr}{Threshold for dominant two-zone occupancy fraction.}
+
+\item{flicker_alt_rate_thr}{Threshold for ABAB alternation rate within minute bins.}
+
+\item{flicker_contiguous_thr}{Threshold for fraction of contiguous transitions within minute bins.}
 }
 \value{
 Cleaned, downsampled data frame.
