@@ -14,7 +14,7 @@ downsample_activity(df, n = 1, precision = "minute")
 \item{precision}{Time unit for binning (e.g., "minute").}
 }
 \value{
-Downsampled data frame with activity index summarized by median. Missing data for time bins will be filled with \code{NA}.
+Downsampled data frame with activity index summarized by total distance per bin. Missing data for time bins will be filled with \code{NA}.
 }
 \description{
 Downsample activity index data to fixed intervals

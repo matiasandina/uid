@@ -46,7 +46,7 @@ calculate_activity <- function(df) {
 #' @param df A cleaned dataframe with `datetime`, `rfid`, `session_name`, `matrix_name`, and `activity_index`.
 #' @param n Number of time units per bin (default = 1).
 #' @param precision Time unit for binning (e.g., "minute").
-#' @return Downsampled data frame with activity index summarized by median. Missing data for time bins will be filled with `NA`.
+#' @return Downsampled data frame with activity index summarized by total distance per bin. Missing data for time bins will be filled with `NA`.
 #' @seealso [calculate_activity()]
 #' @export
 downsample_activity <- function(df, n = 1, precision = "minute") {
@@ -56,7 +56,11 @@ downsample_activity <- function(df, n = 1, precision = "minute") {
     ) |>
     dplyr::group_by(session_name, rfid, common_dt, matrix_name) |>
     dplyr::summarise(
-      activity_index = stats::median(activity_index, na.rm = TRUE),
+      activity_index = dplyr::if_else(
+        all(is.na(activity_index)),
+        NA_real_,
+        sum(activity_index, na.rm = TRUE)
+      ),
       .groups = "drop"
     ) |>
     tidyr::complete(

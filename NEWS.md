@@ -1,3 +1,8 @@
+# uid 0.1.3
+
+* Breaking change: `downsample_activity()` now summarizes per-bin activity using total distance (`sum`) instead of `median`.
+* Added NA-safe handling in `downsample_activity()` so all-`NA` bins stay `NA` instead of becoming `0`.
+
 # uid 0.1.2
 
 * Adding column validation on reading of raw data
