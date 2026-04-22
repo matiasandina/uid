@@ -40,8 +40,19 @@ and activity data.}
 \item{flicker_contiguous_thr}{Threshold for fraction of contiguous transitions within minute bins.}
 }
 \value{
-Cleaned, downsampled data frame.
+A list with cleaned, downsampled \code{temperature} and \code{activity} data frames.
 }
 \description{
-Wrapper to clean UID temperature CSV: read, flag outliers, downsample, and plot
+The cleaning workflow assumes that each \code{rfid} belongs to a single
+\code{matrix_name} within a session. If the same \code{rfid} is detected on more than
+one matrix, the function prints a summary table with \code{session_name},
+\code{rfid}, \code{matrix_name}, \code{n}, \verb{\%}, \code{min_dt}, and \code{max_dt}.
+}
+\details{
+Low-percentage duplicate detections can happen when matrices are placed too
+close to each other or when a cage is briefly placed on the wrong platform.
+In those cases, the function asks for explicit confirmation before removing
+rows from the matrix with the lower percentage of detections. If duplicate
+measurements on the secondary matrix exceed 10\% of detections for that
+\code{session_name}/\code{rfid} pair, the function aborts and requires manual review.
 }

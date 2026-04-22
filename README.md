@@ -50,6 +50,20 @@ This will:
 - Downsample by 1-minute intervals (by default)
 - Save cleaned data and diagnostic plots
 
+The cleaning workflow assumes that each `rfid` belongs to a single
+`matrix_name` within a session. If the same `rfid` is detected on more
+than one matrix, `clean_raw_uid()` and `process_all_uid_files()` now
+print a summary table with `session_name`, `rfid`, `matrix_name`, `n`,
+`%`, `min_dt`, and `max_dt`.
+
+This usually reflects stray detections caused by matrices being placed
+too close to each other, or by a cage being briefly placed on the wrong
+platform. If the duplicate detections are a small minority of rows, the
+package asks for explicit confirmation before removing rows from the
+matrix with the lower percentage of detections. If those duplicate
+detections exceed 10% for a given `session_name` / `rfid` pair,
+processing stops and the file should be reviewed manually.
+
 ------------------------------------------------------------------------
 
 You can also use lower-level functions for more custom workflows:

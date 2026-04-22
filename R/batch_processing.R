@@ -3,6 +3,13 @@
 #' Finds, groups, and processes all raw UID export CSVs in a directory,
 #' then saves cleaned and downsampled outputs to a target directory.
 #'
+#' Each cleaned session is expected to contain a single `rfid` to `matrix_name`
+#' mapping. If the same `rfid` appears on more than one matrix within a session,
+#' the cleaning step prints a summary table and requires an interactive choice.
+#' Low-percentage stray detections can be removed after confirmation; more
+#' substantial duplicate detections abort processing and should be reviewed
+#' manually.
+#'
 #' @param raw_export_dir Directory containing raw UID .CSV files.
 #' @param output_dir Directory to write cleaned files to.
 #' @param n Bin size for downsampling (default = 1).

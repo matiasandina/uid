@@ -28,6 +28,18 @@ file_path <- "path_to_your_data.csv"
 raw <- read_raw_uid_csv(file_path)
 ```
 
+The cleaning workflow assumes that each `rfid` maps to a single
+`matrix_name` within a session. In practice, duplicate matrix detections
+usually reflect mistakes such as matrices being placed too close to each
+other or a cage being briefly placed on the wrong platform.
+
+When `clean_raw_uid()` detects the same `rfid` on more than one matrix,
+it prints a summary table with `session_name`, `rfid`, `matrix_name`,
+`n`, `%`, `min_dt`, and `max_dt`. Low-percentage duplicates can be
+removed after explicit confirmation. If duplicate detections on the
+secondary matrix exceed 10%, processing aborts and the file should be
+reviewed manually.
+
 The `uid` package provides sample data that emulates the result of `read_raw_uid_csv`, and we can use it for the tutorial.
 
 ```{r sampledata}

@@ -40,6 +40,134 @@ read_raw_uid_csv <- function(filepath, dt_format = "%Y/%m/%d %H:%M:%S") {
 }
 
 
+# Summarize RFIDs detected on more than one matrix within a session.
+summarize_duplicate_rfid_matrices <- function(df) {
+  df |>
+    dplyr::group_by(session_name, rfid, matrix_name) |>
+    dplyr::summarise(
+      n = dplyr::n(),
+      min_dt = min(datetime),
+      max_dt = max(datetime),
+      .groups = "drop"
+    ) |>
+    dplyr::group_by(session_name, rfid) |>
+    dplyr::mutate(
+      total_n = sum(n),
+      pct = 100 * n / total_n,
+      dominant_n = max(n),
+      dominant_count = sum(n == dominant_n),
+      matrix_count = dplyr::n()
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::filter(matrix_count > 1)
+}
+
+
+# Print a compact duplicate-matrix summary for interactive review.
+print_duplicate_rfid_matrix_table <- function(summary_df) {
+  print(
+    summary_df |>
+      dplyr::arrange(session_name, rfid, dplyr::desc(n), matrix_name) |>
+      dplyr::transmute(
+        session_name,
+        rfid,
+        matrix_name,
+        n,
+        `%` = round(pct, 2),
+        min_dt,
+        max_dt
+      ),
+    n = nrow(summary_df),
+    width = Inf
+  )
+}
+
+
+# Resolve duplicate RFID detections across matrices before cleaning.
+resolve_duplicate_rfid_matrices <- function(df, threshold_pct = 10, user_response = NULL) {
+  summary_df <- summarize_duplicate_rfid_matrices(df)
+
+  if (nrow(summary_df) == 0) {
+    return(df)
+  }
+
+  cli::cli_alert_warning(
+    "Detected RFID measurements on more than one matrix within the same session."
+  )
+  print_duplicate_rfid_matrix_table(summary_df)
+
+  ambiguous_df <- summary_df |>
+    dplyr::filter(dominant_count > 1)
+
+  if (nrow(ambiguous_df) > 0) {
+    cli::cli_abort(
+      paste(
+        "Detected an ambiguous dominant matrix for at least one session/RFID pair.",
+        "Unable to continue safely."
+      )
+    )
+  }
+
+  low_pct_duplicates <- summary_df |>
+    dplyr::filter(n < dominant_n)
+
+  substantial_duplicates <- low_pct_duplicates |>
+    dplyr::filter(pct > threshold_pct)
+
+  if (nrow(substantial_duplicates) > 0) {
+    cli::cli_abort(
+      paste(
+        "Detected a substantial number of measurements in more than one matrix.",
+        "Low-percentage duplicates must stay at or below",
+        paste0(threshold_pct, "%"),
+        "to allow automatic cleanup."
+      )
+    )
+  }
+
+  if (is.null(user_response)) {
+    if (!interactive()) {
+      cli::cli_abort(
+        paste(
+          "Low-percentage duplicate measurements were detected across matrices.",
+          "Interactive confirmation is required before deleting them."
+        )
+      )
+    }
+
+    user_response <- utils::menu(
+      choices = c(
+        "Remove rows from matrix with lower % detections and continue",
+        "Abort"
+      ),
+      title = paste(
+        "A single RFID was detected on more than one matrix within the same session.",
+        "Rows from the matrix with lower % detections can be deleted when those",
+        "duplicate detections stay at or below the allowed threshold.",
+        "What should we do?"
+      )
+    )
+  }
+
+  if (user_response != 1) {
+    cli::cli_abort("Aborting by user request.")
+  }
+
+  to_remove <- low_pct_duplicates |>
+    dplyr::select(session_name, rfid, matrix_name)
+
+  cli::cli_alert_info(
+    "Removing rows from the matrix with lower % detections for {nrow(to_remove)} RFID/matrix pairing(s)."
+  )
+
+  df |>
+    dplyr::anti_join(
+      to_remove,
+      by = c("session_name", "rfid", "matrix_name")
+    )
+}
+
+
 #' Flag temperature outliers based on rolling difference threshold
 #'
 #' @param df A dataframe with `datetime`, `rfid`, and `temperature`.
@@ -144,6 +272,18 @@ plot_downsampled_temperature <- function(df_down, output_dir, filepath) {
 
 #' Wrapper to clean UID temperature CSV: read, flag outliers, downsample, and plot
 #'
+#' The cleaning workflow assumes that each `rfid` belongs to a single
+#' `matrix_name` within a session. If the same `rfid` is detected on more than
+#' one matrix, the function prints a summary table with `session_name`,
+#' `rfid`, `matrix_name`, `n`, `%`, `min_dt`, and `max_dt`.
+#'
+#' Low-percentage duplicate detections can happen when matrices are placed too
+#' close to each other or when a cage is briefly placed on the wrong platform.
+#' In those cases, the function asks for explicit confirmation before removing
+#' rows from the matrix with the lower percentage of detections. If duplicate
+#' measurements on the secondary matrix exceed 10% of detections for that
+#' `session_name`/`rfid` pair, the function aborts and requires manual review.
+#'
 #' @param filepath Path to a raw UID CSV.
 #' @param n Downsampling interval size (default = 1) applied to both temperature
 #'   and activity data.
@@ -155,7 +295,7 @@ plot_downsampled_temperature <- function(df_down, output_dir, filepath) {
 #' @param flicker_dominant_two_thr Threshold for dominant two-zone occupancy fraction.
 #' @param flicker_alt_rate_thr Threshold for ABAB alternation rate within minute bins.
 #' @param flicker_contiguous_thr Threshold for fraction of contiguous transitions within minute bins.
-#' @return Cleaned, downsampled data frame.
+#' @return A list with cleaned, downsampled `temperature` and `activity` data frames.
 #' @export
 clean_raw_uid <- function(
   filepath,
@@ -169,7 +309,10 @@ clean_raw_uid <- function(
   flicker_alt_rate_thr = 0.40,
   flicker_contiguous_thr = 0.65
 ) {
-  df_flagged <- read_raw_uid_csv(filepath) |>
+  df_validated <- read_raw_uid_csv(filepath) |>
+    resolve_duplicate_rfid_matrices()
+
+  df_flagged <- df_validated |>
     flag_temperature_outliers(
       threshold = outlier_threshold_celsius
     )

@@ -42,3 +42,11 @@ Invisibly returns a list of output file paths.
 Finds, groups, and processes all raw UID export CSVs in a directory,
 then saves cleaned and downsampled outputs to a target directory.
 }
+\details{
+Each cleaned session is expected to contain a single \code{rfid} to \code{matrix_name}
+mapping. If the same \code{rfid} appears on more than one matrix within a session,
+the cleaning step prints a summary table and requires an interactive choice.
+Low-percentage stray detections can be removed after confirmation; more
+substantial duplicate detections abort processing and should be reviewed
+manually.
+}
