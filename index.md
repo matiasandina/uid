@@ -1,0 +1,80 @@
+# uid
+
+The goal of uid is to streamline the processing of temperature data
+exported from UID devices. It provides functions for cleaning, outlier
+detection, downsampling, and diagnostic plotting, assuming a structured
+directory layout for raw and processed data.
+
+## Installation
+
+You can install the development version of uid like so:
+
+``` r
+devtools::install_github("matiasandina/uid")
+```
+
+## Directory Structure
+
+The package assumes the following directory layout:
+
+``` R
+temperature/
+├── raw_data/   # Place raw UID .CSV files here
+└── data/       # Cleaned, downsampled outputs will be written here
+```
+
+## Example
+
+``` r
+library(uid)
+
+# Process all raw UID CSVs from a directory
+process_all_uid_files(
+  raw_export_dir = "temperature/raw_data",
+  output_dir = "temperature/data"
+)
+```
+
+This will:
+
+- Group files by shared base name (e.g. handling \_1_of_n format)
+- Remove temperature outliers
+- Downsample by 1-minute intervals (by default)
+- Save cleaned data and diagnostic plots
+
+The cleaning workflow assumes that each `rfid` belongs to a single
+`matrix_name` within a session. If the same `rfid` is detected on more
+than one matrix,
+[`clean_raw_uid()`](https://matiasandina.github.io/uid/reference/clean_raw_uid.md)
+and
+[`process_all_uid_files()`](https://matiasandina.github.io/uid/reference/process_all_uid_files.md)
+now print a summary table with `session_name`, `rfid`, `matrix_name`,
+`n`, `%`, `min_dt`, and `max_dt`.
+
+This usually reflects stray detections caused by matrices being placed
+too close to each other, or by a cage being briefly placed on the wrong
+platform. If the duplicate detections are a small minority of rows, the
+package asks for explicit confirmation before removing rows from the
+matrix with the lower percentage of detections. If those duplicate
+detections exceed 10% for a given `session_name` / `rfid` pair,
+processing stops and the file should be reviewed manually.
+
+------------------------------------------------------------------------
+
+You can also use lower-level functions for more custom workflows:
+
+``` r
+df <- read_raw_uid_csv("path/to/file.csv")
+df_flagged <- flag_temperature_outliers(df, threshold = 1)
+df_clean <- df_flagged |> dplyr::filter(!outlier_global)
+df_downsampled <- downsample_temperature(df_clean)
+```
+
+## Roadmap
+
+Planned features include:
+
+- Example Data & Tests
+- Docs
+- Feature extraction function
+- Package Logo :)

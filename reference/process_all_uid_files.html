@@ -54,7 +54,11 @@ then saves cleaned and downsampled outputs to a target directory.</p>
 <span>  output_dir <span class="op">=</span> <span class="st">"temperature/data"</span>,</span>
 <span>  n <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  precision <span class="op">=</span> <span class="st">"minute"</span>,</span>
-<span>  outlier_threshold <span class="op">=</span> <span class="fl">1</span></span>
+<span>  outlier_threshold <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  flicker_correction <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  flicker_dominant_two_thr <span class="op">=</span> <span class="fl">0.65</span>,</span>
+<span>  flicker_alt_rate_thr <span class="op">=</span> <span class="fl">0.4</span>,</span>
+<span>  flicker_contiguous_thr <span class="op">=</span> <span class="fl">0.65</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -81,10 +85,35 @@ then saves cleaned and downsampled outputs to a target directory.</p>
 <dt id="arg-outlier-threshold">outlier_threshold<a class="anchor" aria-label="anchor" href="#arg-outlier-threshold"></a></dt>
 <dd><p>Temperature delta threshold for outlier detection.</p></dd>
 
+
+<dt id="arg-flicker-correction">flicker_correction<a class="anchor" aria-label="anchor" href="#arg-flicker-correction"></a></dt>
+<dd><p>Whether to apply activity flicker correction before quantification.</p></dd>
+
+
+<dt id="arg-flicker-dominant-two-thr">flicker_dominant_two_thr<a class="anchor" aria-label="anchor" href="#arg-flicker-dominant-two-thr"></a></dt>
+<dd><p>Threshold for dominant two-zone occupancy fraction.</p></dd>
+
+
+<dt id="arg-flicker-alt-rate-thr">flicker_alt_rate_thr<a class="anchor" aria-label="anchor" href="#arg-flicker-alt-rate-thr"></a></dt>
+<dd><p>Threshold for ABAB alternation rate within minute bins.</p></dd>
+
+
+<dt id="arg-flicker-contiguous-thr">flicker_contiguous_thr<a class="anchor" aria-label="anchor" href="#arg-flicker-contiguous-thr"></a></dt>
+<dd><p>Threshold for contiguous-transition fraction within minute bins.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Invisibly returns a list of output file paths.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Each cleaned session is expected to contain a single <code>rfid</code> to <code>matrix_name</code>
+mapping. If the same <code>rfid</code> appears on more than one matrix within a session,
+the cleaning step prints a summary table and requires an interactive choice.
+Low-percentage stray detections can be removed after confirmation; more
+substantial duplicate detections abort processing and should be reviewed
+manually.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -96,7 +125,7 @@ then saves cleaned and downsampled outputs to a target directory.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

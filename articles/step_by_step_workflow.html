@@ -81,6 +81,19 @@ with the package, and serves to illustrate how the package works.</p>
 <code class="sourceCode R"><span><span class="va">file_path</span> <span class="op">&lt;-</span> <span class="st">"path_to_your_data.csv"</span></span>
 <span><span class="co"># this will read and clean names, switch the datetime to proper datetime</span></span>
 <span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_raw_uid_csv.html">read_raw_uid_csv</a></span><span class="op">(</span><span class="va">file_path</span><span class="op">)</span></span></code></pre></div>
+<p>The cleaning workflow assumes that each <code>rfid</code> maps to a
+single <code>matrix_name</code> within a session. In practice, duplicate
+matrix detections usually reflect mistakes such as matrices being placed
+too close to each other or a cage being briefly placed on the wrong
+platform.</p>
+<p>When <code><a href="../reference/clean_raw_uid.html">clean_raw_uid()</a></code> detects the same <code>rfid</code>
+on more than one matrix, it prints a summary table with
+<code>session_name</code>, <code>rfid</code>, <code>matrix_name</code>,
+<code>n</code>, <code>%</code>, <code>min_dt</code>, and
+<code>max_dt</code>. Low-percentage duplicates can be removed after
+explicit confirmation. If duplicate detections on the secondary matrix
+exceed 10%, processing aborts and the file should be reviewed
+manually.</p>
 <p>The <code>uid</code> package provides sample data that emulates the
 result of <code>read_raw_uid_csv</code>, and we can use it for the
 tutorial.</p>
@@ -127,7 +140,7 @@ instead of saving them to file.</p>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">rfid</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_date.html" class="external-link">scale_x_datetime</a></span><span class="op">(</span>date_breaks <span class="op">=</span> <span class="st">"6 hours"</span>, date_labels <span class="op">=</span> <span class="st">"%H:%M"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="step_by_step_workflow_files/figure-html/plot-1.png" width="700"></p>
+<p><img src="step_by_step_workflow_files/figure-html/plot-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="activity-calculation">3. Activity calculation<a class="anchor" aria-label="anchor" href="#activity-calculation"></a>
@@ -196,7 +209,7 @@ downsampled <code>common_time</code>.</p>
 downsampling. We included some of such gaps in the sample data.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">merged</span>, <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">temperature</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 37 × 6</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 37 × 7</span></span></span>
 <span><span class="co">#&gt;    session_name rfid  matrix_name common_dt           temperature activity_index</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>                    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> sample_sess… A1B2… MM1         2025-01-01 <span style="color: #949494;">03:28:00</span>          <span style="color: #BB0000;">NA</span>             <span style="color: #BB0000;">NA</span></span></span>
@@ -209,7 +222,8 @@ downsampling. We included some of such gaps in the sample data.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> sample_sess… A1B2… MM1         2025-01-01 <span style="color: #949494;">17:34:00</span>          <span style="color: #BB0000;">NA</span>             <span style="color: #BB0000;">NA</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> sample_sess… A1B2… MM1         2025-01-01 <span style="color: #949494;">17:35:00</span>          <span style="color: #BB0000;">NA</span>             <span style="color: #BB0000;">NA</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> sample_sess… A1B2… MM1         2025-01-01 <span style="color: #949494;">17:36:00</span>          <span style="color: #BB0000;">NA</span>             <span style="color: #BB0000;">NA</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 27 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 27 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: .flicker_corrected &lt;lgl&gt;</span></span></span></code></pre></div>
 <p>It might be desired to interpolate such <code>NA</code>s using
 <code><a href="../reference/interpolate_gaps.html">interpolate_gaps()</a></code>. We can set <code>add_flag = TRUE</code>
 to check what values were interpolated.</p>
@@ -249,7 +263,7 @@ evident.</p>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">rfid</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_date.html" class="external-link">scale_x_datetime</a></span><span class="op">(</span>date_breaks <span class="op">=</span> <span class="st">"30 min"</span>, date_labels <span class="op">=</span> <span class="st">"%H:%M"</span><span class="op">)</span><span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_color_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRUE"</span> <span class="op">=</span> <span class="st">"red"</span>, <span class="st">"FALSE"</span> <span class="op">=</span> <span class="st">"gray20"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="step_by_step_workflow_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<p><img src="step_by_step_workflow_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
 <p>The <code>interp</code> data frame now holds cleaned, downsampled
 values with short gaps interpolated. For processing multiple files
 automatically, see the vignette on <code><a href="../reference/process_all_uid_files.html">process_all_uid_files()</a></code>
@@ -266,7 +280,7 @@ or (<code><a href="../reference/process_all_uid_files.html">help("process_all_ui
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
